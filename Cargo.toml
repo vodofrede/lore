@@ -1,0 +1,14 @@
+[package]
+name = "lore"
+version = "1.0.0"
+edition = "2018"
+description = "Zero-dependency hashing algorithms"
+license = "BSD-3-Clause"
+readme = "README.md"
+homepage = "https://git.palmoe.dk/vodofrede/lore/"
+repository = "https://git.palmoe.dk/vodofrede/lore/"
+keywords = ["algorithms", "compression", "cryptography", "md5", "hash"]
+categories = ["algorithms", "compression", "cryptography"]
+exclude = []
+
+[dependencies]
