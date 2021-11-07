@@ -2,9 +2,12 @@ use criterion::*;
 use lore::md5;
 
 fn md5(c: &mut Criterion) {
-    let test = "tihi xd";
-
-    c.bench_function("md5", |b| b.iter(|| md5::hash(black_box(test))));
+    c.bench_function("md5", |b| {
+        b.iter(|| {
+            let hash = md5::hash(black_box("tihi xd"));
+            hash.to_hex_string();
+        })
+    });
 }
 
 criterion_group!(benches, md5);

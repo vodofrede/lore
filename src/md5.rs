@@ -25,19 +25,15 @@ const S: [u32; 64] = [
     21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ];
 
-#[inline(always)]
-fn op(
-    function: impl Fn(u32, u32, u32) -> u32,
-    state: (u32, u32, u32, u32),
-    word: u32,
-    index: usize,
-) -> u32 {
-    function(state.1, state.2, state.3)
-        .wrapping_add(state.0)
-        .wrapping_add(word)
-        .wrapping_add(K[index])
-        .rotate_left(S[index])
-        .wrapping_add(state.1)
+pub struct Hash([u32; 4]);
+
+impl Hash {
+    pub fn to_hex_string(&self) -> String {
+        format!(
+            "{:08x}{:08x}{:08x}{:08x}",
+            self.0[0], self.0[1], self.0[2], self.0[3]
+        )
+    }
 }
 
 fn preprocess(msg: impl AsRef<[u8]>) -> Vec<u8> {
@@ -57,7 +53,22 @@ fn preprocess(msg: impl AsRef<[u8]>) -> Vec<u8> {
     message
 }
 
-pub fn hash(input: impl AsRef<[u8]>) -> String {
+#[inline(always)]
+fn op(
+    function: impl Fn(u32, u32, u32) -> u32,
+    state: (u32, u32, u32, u32),
+    word: u32,
+    index: usize,
+) -> u32 {
+    function(state.1, state.2, state.3)
+        .wrapping_add(state.0)
+        .wrapping_add(word)
+        .wrapping_add(K[index])
+        .rotate_left(S[index])
+        .wrapping_add(state.1)
+}
+
+pub fn hash(input: impl AsRef<[u8]>) -> Hash {
     let (a, b, c, d) = preprocess(input).chunks_exact(64).fold(
         (0x67452301u32, 0xefcdab89u32, 0x98badcfeu32, 0x10325476u32),
         |(mut a0, mut b0, mut c0, mut d0), chunk| {
@@ -65,7 +76,6 @@ pub fn hash(input: impl AsRef<[u8]>) -> String {
             for (word, c) in words.iter_mut().zip(chunk.chunks_exact(4)) {
                 *word = u32::from_le_bytes(c.try_into().unwrap());
             }
-
             let (mut a, mut b, mut c, mut d) = (a0, b0, c0, d0);
 
             // round 1
@@ -161,28 +171,35 @@ pub fn hash(input: impl AsRef<[u8]>) -> String {
         },
     );
 
-    format!(
-        "{:08x}{:08x}{:08x}{:08x}",
+    Hash([
         a.swap_bytes(),
         b.swap_bytes(),
         c.swap_bytes(),
-        d.swap_bytes()
-    )
+        d.swap_bytes(),
+    ])
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::md5;
 
     #[test]
     fn md5() {
-        assert_eq!("73e51861b65c1e83d6136fb6a002585e", hash("tihi xd"));
-        assert_eq!("9cdfb439c7876e703e307864c9167a15", hash("lol"));
-        assert_eq!("5eb63bbbe01eeed093cb22bb8f5acdc3", hash("hello world"));
-        assert_eq!("d41d8cd98f00b204e9800998ecf8427e", hash(""));
         assert_eq!(
-            "fd6f92edff2b7db7cd92b494c4926ef0",
-            hash("Lorem ipsum dolor sit amet. Nam placeat iste aut dolorem necessitatibus sit unde magni. Nam cumque quia nam fugit quibusdam ut incidunt minima nam dignissimos iusto et voluptatum magnam. Et pariatur eius vel excepturi odit libero sit molestiae consequatur vel nostrum ullam. Sit sint beatae eos doloribus sapiente aut aperiam ullam ut laboriosam debitis! Qui reiciendis rerum est omnis galisum aut similique iure est dolores fuga sit rerum dicta. Aut excepturi fuga et enim ipsum a quia ut velit atque id iste nobis. Non molestiae vero et veritatis aliquam sed enim ducimus. At sunt tempora quo quisquam unde aut ipsum nulla et fugit eius in nulla fugit qui magnam excepturi aut rerum officia. Et officia magnam eos reiciendis voluptatum ea voluptas recusandae in similique enim. Ut provident laudantium ut temporibus eius ut laudantium voluptate aut ducimus impedit. Et asperiores aperiam sit deleniti voluptas ex porro omnis ut voluptas assumenda aut necessitatibus aliquid.")
+            "73e51861b65c1e83d6136fb6a002585e",
+            md5::hash("tihi xd").to_hex_string()
         );
+
+        assert_eq!(
+            "9cdfb439c7876e703e307864c9167a15",
+            md5::hash("lol").to_hex_string()
+        );
+
+        assert_eq!(
+            "d41d8cd98f00b204e9800998ecf8427e",
+            md5::hash("").to_hex_string()
+        );
+
+        assert_eq!("fd6f92edff2b7db7cd92b494c4926ef0", md5::hash("Lorem ipsum dolor sit amet. Nam placeat iste aut dolorem necessitatibus sit unde magni. Nam cumque quia nam fugit quibusdam ut incidunt minima nam dignissimos iusto et voluptatum magnam. Et pariatur eius vel excepturi odit libero sit molestiae consequatur vel nostrum ullam. Sit sint beatae eos doloribus sapiente aut aperiam ullam ut laboriosam debitis! Qui reiciendis rerum est omnis galisum aut similique iure est dolores fuga sit rerum dicta. Aut excepturi fuga et enim ipsum a quia ut velit atque id iste nobis. Non molestiae vero et veritatis aliquam sed enim ducimus. At sunt tempora quo quisquam unde aut ipsum nulla et fugit eius in nulla fugit qui magnam excepturi aut rerum officia. Et officia magnam eos reiciendis voluptatum ea voluptas recusandae in similique enim. Ut provident laudantium ut temporibus eius ut laudantium voluptate aut ducimus impedit. Et asperiores aperiam sit deleniti voluptas ex porro omnis ut voluptas assumenda aut necessitatibus aliquid.").to_hex_string());
     }
 }
