@@ -25,6 +25,7 @@ const S: [u32; 64] = [
     21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
 ];
 
+#[inline(always)]
 fn op(
     function: impl Fn(u32, u32, u32) -> u32,
     state: (u32, u32, u32, u32),
@@ -67,33 +68,89 @@ pub fn hash(input: impl AsRef<[u8]>) -> String {
 
             let (mut a, mut b, mut c, mut d) = (a0, b0, c0, d0);
 
-            for i in (0..4).map(|i| i * 4) {
-                a = op(F, (a, b, c, d), words[i], i);
-                d = op(F, (d, a, b, c), words[i + 1], i + 1);
-                c = op(F, (c, d, a, b), words[i + 2], i + 2);
-                b = op(F, (b, c, d, a), words[i + 3], i + 3);
-            }
+            // round 1
+            a = op(F, (a, b, c, d), words[0], 0);
+            d = op(F, (d, a, b, c), words[1], 1);
+            c = op(F, (c, d, a, b), words[2], 2);
+            b = op(F, (b, c, d, a), words[3], 3);
 
-            for i in (4..8).map(|i| i * 4) {
-                a = op(G, (a, b, c, d), words[(5 * i + 1) % 16], i);
-                d = op(G, (d, a, b, c), words[(5 * (i + 1) + 1) % 16], i + 1);
-                c = op(G, (c, d, a, b), words[(5 * (i + 2) + 1) % 16], i + 2);
-                b = op(G, (b, c, d, a), words[(5 * (i + 3) + 1) % 16], i + 3);
-            }
+            a = op(F, (a, b, c, d), words[4], 4);
+            d = op(F, (d, a, b, c), words[5], 5);
+            c = op(F, (c, d, a, b), words[6], 6);
+            b = op(F, (b, c, d, a), words[7], 7);
 
-            for i in (8..12).map(|i| i * 4) {
-                a = op(H, (a, b, c, d), words[(3 * i + 5) % 16], i);
-                d = op(H, (d, a, b, c), words[(3 * (i + 1) + 5) % 16], i + 1);
-                c = op(H, (c, d, a, b), words[(3 * (i + 2) + 5) % 16], i + 2);
-                b = op(H, (b, c, d, a), words[(3 * (i + 3) + 5) % 16], i + 3);
-            }
+            a = op(F, (a, b, c, d), words[8], 8);
+            d = op(F, (d, a, b, c), words[9], 9);
+            c = op(F, (c, d, a, b), words[10], 10);
+            b = op(F, (b, c, d, a), words[11], 11);
 
-            for i in (12..16).map(|i| i * 4) {
-                a = op(I, (a, b, c, d), words[(7 * i) % 16], i);
-                d = op(I, (d, a, b, c), words[(7 * (i + 1)) % 16], i + 1);
-                c = op(I, (c, d, a, b), words[(7 * (i + 2)) % 16], i + 2);
-                b = op(I, (b, c, d, a), words[(7 * (i + 3)) % 16], i + 3);
-            }
+            a = op(F, (a, b, c, d), words[12], 12);
+            d = op(F, (d, a, b, c), words[13], 13);
+            c = op(F, (c, d, a, b), words[14], 14);
+            b = op(F, (b, c, d, a), words[15], 15);
+
+            // round 2
+            a = op(G, (a, b, c, d), words[1], 16);
+            d = op(G, (d, a, b, c), words[6], 17);
+            c = op(G, (c, d, a, b), words[11], 18);
+            b = op(G, (b, c, d, a), words[0], 19);
+
+            a = op(G, (a, b, c, d), words[5], 20);
+            d = op(G, (d, a, b, c), words[10], 21);
+            c = op(G, (c, d, a, b), words[15], 22);
+            b = op(G, (b, c, d, a), words[4], 23);
+
+            a = op(G, (a, b, c, d), words[9], 24);
+            d = op(G, (d, a, b, c), words[14], 25);
+            c = op(G, (c, d, a, b), words[3], 26);
+            b = op(G, (b, c, d, a), words[8], 27);
+
+            a = op(G, (a, b, c, d), words[13], 28);
+            d = op(G, (d, a, b, c), words[2], 29);
+            c = op(G, (c, d, a, b), words[7], 30);
+            b = op(G, (b, c, d, a), words[12], 31);
+
+            // round 3
+            a = op(H, (a, b, c, d), words[5], 32);
+            d = op(H, (d, a, b, c), words[8], 33);
+            c = op(H, (c, d, a, b), words[11], 34);
+            b = op(H, (b, c, d, a), words[14], 35);
+
+            a = op(H, (a, b, c, d), words[1], 36);
+            d = op(H, (d, a, b, c), words[4], 37);
+            c = op(H, (c, d, a, b), words[7], 38);
+            b = op(H, (b, c, d, a), words[10], 39);
+
+            a = op(H, (a, b, c, d), words[13], 40);
+            d = op(H, (d, a, b, c), words[0], 41);
+            c = op(H, (c, d, a, b), words[3], 42);
+            b = op(H, (b, c, d, a), words[6], 43);
+
+            a = op(H, (a, b, c, d), words[9], 44);
+            d = op(H, (d, a, b, c), words[12], 45);
+            c = op(H, (c, d, a, b), words[15], 46);
+            b = op(H, (b, c, d, a), words[2], 47);
+
+            // round 4
+            a = op(I, (a, b, c, d), words[0], 48);
+            d = op(I, (d, a, b, c), words[7], 49);
+            c = op(I, (c, d, a, b), words[14], 50);
+            b = op(I, (b, c, d, a), words[5], 51);
+
+            a = op(I, (a, b, c, d), words[12], 52);
+            d = op(I, (d, a, b, c), words[3], 53);
+            c = op(I, (c, d, a, b), words[10], 54);
+            b = op(I, (b, c, d, a), words[1], 55);
+
+            a = op(I, (a, b, c, d), words[8], 56);
+            d = op(I, (d, a, b, c), words[15], 57);
+            c = op(I, (c, d, a, b), words[6], 58);
+            b = op(I, (b, c, d, a), words[13], 59);
+
+            a = op(I, (a, b, c, d), words[4], 60);
+            d = op(I, (d, a, b, c), words[11], 61);
+            c = op(I, (c, d, a, b), words[2], 62);
+            b = op(I, (b, c, d, a), words[9], 63);
 
             a0 = a0.wrapping_add(a);
             b0 = b0.wrapping_add(b);
@@ -111,4 +168,21 @@ pub fn hash(input: impl AsRef<[u8]>) -> String {
         c.swap_bytes(),
         d.swap_bytes()
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn md5() {
+        assert_eq!("73e51861b65c1e83d6136fb6a002585e", hash("tihi xd"));
+        assert_eq!("9cdfb439c7876e703e307864c9167a15", hash("lol"));
+        assert_eq!("5eb63bbbe01eeed093cb22bb8f5acdc3", hash("hello world"));
+        assert_eq!("d41d8cd98f00b204e9800998ecf8427e", hash(""));
+        assert_eq!(
+            "fd6f92edff2b7db7cd92b494c4926ef0",
+            hash("Lorem ipsum dolor sit amet. Nam placeat iste aut dolorem necessitatibus sit unde magni. Nam cumque quia nam fugit quibusdam ut incidunt minima nam dignissimos iusto et voluptatum magnam. Et pariatur eius vel excepturi odit libero sit molestiae consequatur vel nostrum ullam. Sit sint beatae eos doloribus sapiente aut aperiam ullam ut laboriosam debitis! Qui reiciendis rerum est omnis galisum aut similique iure est dolores fuga sit rerum dicta. Aut excepturi fuga et enim ipsum a quia ut velit atque id iste nobis. Non molestiae vero et veritatis aliquam sed enim ducimus. At sunt tempora quo quisquam unde aut ipsum nulla et fugit eius in nulla fugit qui magnam excepturi aut rerum officia. Et officia magnam eos reiciendis voluptatum ea voluptas recusandae in similique enim. Ut provident laudantium ut temporibus eius ut laudantium voluptate aut ducimus impedit. Et asperiores aperiam sit deleniti voluptas ex porro omnis ut voluptas assumenda aut necessitatibus aliquid.")
+        );
+    }
 }

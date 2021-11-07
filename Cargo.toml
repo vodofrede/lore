@@ -11,4 +11,9 @@ keywords = ["algorithms", "compression", "cryptography", "md5", "hash"]
 categories = ["algorithms", "compression", "cryptography"]
 exclude = []
 
-[dependencies]
+[dev-dependencies]
+criterion = "^0.3"
+
+[[bench]]
+name = "md5"
+harness = false
