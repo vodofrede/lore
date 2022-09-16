@@ -1,19 +1,17 @@
 # Lore
 
-Hashing algorithms. Currently only implements md5.
+Hashing algorithms with a straight-forward API and no dependencies.
 
-Doesn't use any dependencies.
+Currently implements:
 
-Performance/stability not guaranteed.
+-   MD2, MD4, and MD5
 
 ## Example
 
 ```rust
-use lore::md5;
-
 fn main() {
     let input = "lol xd";
-    let digest = md5::hash(input);
+    let digest = lore::md5(input);
     assert_eq!(digest, "982d7f24f8985a6baa5cf129acc73561");
 }
 ```
