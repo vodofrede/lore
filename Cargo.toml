@@ -11,4 +11,9 @@ keywords = ["algorithms", "compression", "cryptography", "md5", "hash"]
 categories = ["algorithms", "compression", "cryptography"]
 exclude = []
 
-[dev-dependencies]
+[dependencies]
+serde = { version = ">=1.0.0", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]

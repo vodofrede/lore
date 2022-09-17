@@ -27,7 +27,7 @@ const G: fn(u32, u32, u32) -> u32 = |x: u32, y: u32, z: u32| (x & y) | (x & z) |
 const H: fn(u32, u32, u32) -> u32 = |x: u32, y: u32, z: u32| x ^ y ^ z;
 
 // pad the message to next 512-bit interval
-pub(crate) fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
+pub fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
     let mut message = message.as_ref().to_vec();
     let message_length = message.len().wrapping_mul(8) as u64;
 
@@ -36,7 +36,7 @@ pub(crate) fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
 
     // add 0 bits until length in bits is congruent to 448 mod 512
     while (message.len()) % 64 != 56 {
-        message.push(0u8)
+        message.push(0u8);
     }
 
     // append message length (64 bits)
@@ -48,7 +48,7 @@ pub(crate) fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
 // compute an invidiual step in the md4 algorithm
 fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
     // choose function and constant based on which round is currently active
-    let (rc, f) = match index {
+    let (constant, round_function) = match index {
         0..=15 => (C1, F),
         16..=31 => (C2, G),
         32..=47 => (C3, H),
@@ -56,17 +56,23 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
     };
 
     // main operation
-    a = f(b, c, d)
+    a = round_function(b, c, d)
         .wrapping_add(a)
         .wrapping_add(words[W[index]])
-        .wrapping_add(rc)
+        .wrapping_add(constant)
         .rotate_left(S[index]);
 
     [a, b, c, d]
 }
 
-/// Compute the MD4 hash of the input bytes
+/// Computes the MD4 digest of the input bytes.
+///
+/// Returns a `Digest<16>` which implements `Display` in order to get at hexadecimal-string representation.
+///
 /// # Examples
+///
+/// Basic usage:
+///
 /// ```
 /// let input = "abc";
 /// let digest = lore::md4(input);
@@ -165,7 +171,7 @@ mod tests {
         assert_eq!(
             hash("Rosetta Code").to_string(),
             "a52bcfc6a0d0d300cdc5ddbfbefe478b"
-        )
+        );
     }
 
     #[test]

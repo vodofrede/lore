@@ -36,7 +36,7 @@ const H: fn(u32, u32, u32) -> u32 = |x: u32, y: u32, z: u32| x ^ y ^ z;
 const I: fn(u32, u32, u32) -> u32 = |x: u32, y: u32, z: u32| y ^ (x | !z);
 
 fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
-    let f = match index {
+    let round_function = match index {
         0..=15 => F,
         16..=31 => G,
         32..=47 => H,
@@ -44,7 +44,7 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
         _ => panic!("This function shouldn't be called using an index outside 0..48"),
     };
 
-    a = f(b, c, d)
+    a = round_function(b, c, d)
         .wrapping_add(a)
         .wrapping_add(words[W[index]])
         .wrapping_add(K[index])
@@ -54,13 +54,20 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
     [a, b, c, d]
 }
 
-/// Compute the MD5 hash of the input bytes
+/// Computes the MD5 digest of the input bytes.
+///
+/// Returns a `Digest<16>` which implements `Display` in order to get at hexadecimal-string representation.
+///
 /// # Examples
+///
+/// Basic usage:
+///
 /// ```
 /// let input = "lol";
 /// let digest = lore::md5(input);
 ///
 /// assert_eq!(digest.to_string(), "9cdfb439c7876e703e307864c9167a15");
+///
 /// ```
 pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
     let padded = pad(message);

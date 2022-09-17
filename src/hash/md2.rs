@@ -43,8 +43,14 @@ fn checksum(message: impl AsRef<[u8]>) -> Vec<u8> {
     message
 }
 
-/// Compute the MD2 hash of the input bytes
+/// Computes the MD2 digest of the input bytes.
+///
+/// Returns a `Digest<16>` which implements `Display` in order to get at hexadecimal-string representation.
+///
 /// # Examples
+///
+/// Basic usage:
+///
 /// ```
 /// let input = "abc";
 /// let digest = lore::md2(input);
