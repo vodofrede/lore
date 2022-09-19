@@ -46,21 +46,21 @@ pub fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
 }
 
 // compute an invidiual step in the md4 algorithm
-fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
+fn step([mut a, b, c, d]: [u32; 4], words: &[u32], i: usize) -> [u32; 4] {
     // choose function and constant based on which round is currently active
-    let (constant, round_function) = match index {
-        0..=15 => (C1, F),
-        16..=31 => (C2, G),
-        32..=47 => (C3, H),
+    let (f, k) = match i {
+        0..=15 => (F, C1),
+        16..=31 => (G, C2),
+        32..=47 => (H, C3),
         _ => panic!("This function shouldn't be called using an index outside 0..48"),
     };
 
     // main operation
-    a = round_function(b, c, d)
+    a = f(b, c, d)
         .wrapping_add(a)
-        .wrapping_add(words[W[index]])
-        .wrapping_add(constant)
-        .rotate_left(S[index]);
+        .wrapping_add(words[W[i]])
+        .wrapping_add(k)
+        .rotate_left(S[i]);
 
     [a, b, c, d]
 }

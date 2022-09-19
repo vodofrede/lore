@@ -78,6 +78,22 @@ pub fn words_to_bytes_le(words: impl AsRef<[u32]>) -> Vec<u8> {
         .collect()
 }
 
+pub fn bytes_to_words_be(bytes: impl AsRef<[u8]>) -> Vec<u32> {
+    bytes
+        .as_ref()
+        .array_chunks::<4>()
+        .map(|chunk| u32::from_be_bytes(*chunk))
+        .collect()
+}
+
+pub fn words_to_bytes_be(words: impl AsRef<[u32]>) -> Vec<u8> {
+    words
+        .as_ref()
+        .iter()
+        .flat_map(|w| w.to_be_bytes())
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

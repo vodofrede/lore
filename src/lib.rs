@@ -6,7 +6,8 @@
 #![allow(
     clippy::unreadable_literal,
     clippy::missing_panics_doc,
-    clippy::cast_possible_truncation
+    clippy::cast_possible_truncation,
+    clippy::many_single_char_names
 )]
 // docs
 #![doc = include_str!("../README.md")]

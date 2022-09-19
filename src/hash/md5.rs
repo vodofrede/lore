@@ -70,12 +70,12 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
 ///
 /// ```
 pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
+    // the padding function for MD5 is exactly equivalent to the MD4 version, so we reuse it.
     let padded = pad(message);
     let buffer = padded.array_chunks::<64>().map(bytes_to_words_le).fold(
         [A, B, C, D],
         |[a, b, c, d], words| {
-            println!("{words:08x?}");
-
+            // initialize state
             let mut state = [a, b, c, d];
 
             for i in 0..64 {
@@ -84,6 +84,7 @@ pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
                 state.rotate_right(1);
             }
 
+            // add the computed state to the buffer
             [
                 a.wrapping_add(state[0]),
                 b.wrapping_add(state[1]),
