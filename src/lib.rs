@@ -2,7 +2,7 @@
 #![feature(array_chunks)]
 // lints
 #![deny(missing_docs)]
-#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![warn(clippy::all, clippy::pedantic, clippy::cargo)]
 #![allow(
     clippy::unreadable_literal,
     clippy::missing_panics_doc,

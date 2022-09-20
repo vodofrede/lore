@@ -39,7 +39,7 @@ fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
     message
 }
 
-fn step([mut a, b, c, d, e]: [u32; 5], words: &[u32], i: usize) -> [u32; 5] {
+fn step([a, b, c, d, e]: [u32; 5], words: &[u32], i: usize) -> [u32; 5] {
     let (k, f) = match i {
         0..=19 => (K1, F1),
         20..=39 => (K2, F2),
@@ -48,19 +48,22 @@ fn step([mut a, b, c, d, e]: [u32; 5], words: &[u32], i: usize) -> [u32; 5] {
         _ => panic!("step function should not be called with index outside of range 0..80"),
     };
 
-    a = a
-        .rotate_left(5)
-        .wrapping_add(f(b, c, d))
-        .wrapping_add(e)
-        .wrapping_add(k)
-        .wrapping_add(words[i]);
-
-    [e, a, b.rotate_left(30), c, d]
+    [
+        a.rotate_left(5)
+            .wrapping_add(f(b, c, d))
+            .wrapping_add(e)
+            .wrapping_add(k)
+            .wrapping_add(words[i]),
+        a,
+        b.rotate_left(30),
+        c,
+        d,
+    ]
 }
 
 /// Computes the SHA1 digest of the input bytes.
 ///
-/// Returns a `Digest<20>` which implements `Display` in order to get at hexadecimal-string representation.
+/// Returns a 20-byte long `Digest` which implements `Display` in order to get at hexadecimal-string representation.
 ///
 /// # Examples
 ///
@@ -78,8 +81,13 @@ pub fn hash(message: impl AsRef<[u8]>) -> Digest<20> {
     let buffer = padded
         .array_chunks::<64>()
         .map(|chunk| bytes_to_words_be(*chunk))
-        .fold([H0, H1, H2, H3, H4], |[a, b, c, d, e], words| {
+        .fold([H0, H1, H2, H3, H4], |[a, b, c, d, e], mut words| {
             // extend 16 words to 80 words
+            for i in 16..80 {
+                words.push(
+                    (words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16]).rotate_left(1),
+                );
+            }
 
             // initialize state
             let mut state = [a, b, c, d, e];
@@ -127,6 +135,14 @@ mod tests {
 
     #[test]
     fn sha1_hash() {
-        // panic!();
+        assert_eq!(
+            hash("").to_string(),
+            "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+        );
+
+        assert_eq!(
+            hash("abc").to_string(),
+            "a9993e364706816aba3e25717850c26c9cd0d89d"
+        );
     }
 }
