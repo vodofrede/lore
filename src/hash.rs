@@ -19,8 +19,6 @@ pub mod sha1;
 /// let digest = lore::md5("example");
 /// println!("Digest: {}", digest); // -> Digest: 1a79a4d60de6718e8e5b326e338ae533
 /// ```
-///
-/// Digest contains [`From`] implementations which convert
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Digest<const S: usize>([u8; S]);
