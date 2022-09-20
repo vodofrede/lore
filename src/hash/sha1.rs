@@ -14,14 +14,10 @@ const K2: u32 = 0x6ed9eba1;
 const K3: u32 = 0x8f1bbcdc;
 const K4: u32 = 0xca62c1d6;
 
-// buffer 2 initial constants
-const H0: u32 = 0x67452301;
-const H1: u32 = 0xefcdab89;
-const H2: u32 = 0x98badcfe;
-const H3: u32 = 0x10325476;
-const H4: u32 = 0xc3d2e1f0;
+// 2nd buffer constants
+const H: [u32; 5] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0];
 
-fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
+pub fn pad(message: impl AsRef<[u8]>) -> Vec<u8> {
     let mut message = message.as_ref().to_vec();
     let message_length = message.len().wrapping_mul(8) as u64;
 
@@ -75,22 +71,24 @@ fn step([a, b, c, d, e]: [u32; 5], words: &[u32], i: usize) -> [u32; 5] {
 ///
 /// assert_eq!(digest.to_string(), "a9993e364706816aba3e25717850c26c9cd0d89d")
 /// ```
-pub fn hash(message: impl AsRef<[u8]>) -> Digest<20> {
+pub fn sha1(message: impl AsRef<[u8]>) -> Digest<20> {
     let padded = pad(message);
 
     let buffer = padded
         .array_chunks::<64>()
         .map(|chunk| bytes_to_words_be(*chunk))
-        .fold([H0, H1, H2, H3, H4], |[a, b, c, d, e], mut words| {
+        .map(|mut words| {
             // extend 16 words to 80 words
             for i in 16..80 {
                 words.push(
                     (words[i - 3] ^ words[i - 8] ^ words[i - 14] ^ words[i - 16]).rotate_left(1),
                 );
             }
-
+            words
+        })
+        .fold(H, |buffer, words| {
             // initialize state
-            let mut state = [a, b, c, d, e];
+            let mut state = buffer;
 
             // perform 80 steps
             for i in 0..80 {
@@ -98,13 +96,7 @@ pub fn hash(message: impl AsRef<[u8]>) -> Digest<20> {
             }
 
             // add computed round state to buffer
-            [
-                a.wrapping_add(state[0]),
-                b.wrapping_add(state[1]),
-                c.wrapping_add(state[2]),
-                d.wrapping_add(state[3]),
-                e.wrapping_add(state[4]),
-            ]
+            buffer.zip(state).map(|(b, s)| b.wrapping_add(s))
         });
 
     let digest = *words_to_bytes_be(buffer)
@@ -136,12 +128,12 @@ mod tests {
     #[test]
     fn sha1_hash() {
         assert_eq!(
-            hash("").to_string(),
+            sha1("").to_string(),
             "da39a3ee5e6b4b0d3255bfef95601890afd80709"
         );
 
         assert_eq!(
-            hash("abc").to_string(),
+            sha1("abc").to_string(),
             "a9993e364706816aba3e25717850c26c9cd0d89d"
         );
     }

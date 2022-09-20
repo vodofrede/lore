@@ -57,7 +57,7 @@ fn checksum(message: impl AsRef<[u8]>) -> Vec<u8> {
 ///
 /// assert_eq!(digest.to_string(), "da853b0d3f88d99b30283a69e6ded6bb");
 /// ```
-pub fn hash(msg: impl AsRef<[u8]>) -> Digest<16> {
+pub fn md2(msg: impl AsRef<[u8]>) -> Digest<16> {
     let padded = checksum(pad(msg));
     let buffer = padded
         .array_chunks::<16>()
@@ -131,16 +131,16 @@ mod tests {
     fn md2_hash() {
         assert_eq!(
             "a9046c73e00331af68917d3804f70655",
-            hash(b"hello").to_string()
+            md2(b"hello").to_string()
         );
 
-        assert_eq!("8350e5a3e24c153df2275c9f80692773", hash(b"").to_string());
-        assert_eq!("32ec01ec4a6dac72c0ab96fb34c0b5d1", hash(b"a").to_string());
-        assert_eq!("da853b0d3f88d99b30283a69e6ded6bb", hash(b"abc").to_string());
+        assert_eq!("8350e5a3e24c153df2275c9f80692773", md2(b"").to_string());
+        assert_eq!("32ec01ec4a6dac72c0ab96fb34c0b5d1", md2(b"a").to_string());
+        assert_eq!("da853b0d3f88d99b30283a69e6ded6bb", md2(b"abc").to_string());
 
         assert_eq!(
             "03d85a0d629d2c442e987525319fc471",
-            hash(b"The quick brown fox jumps over the lazy dog").to_string()
+            md2(b"The quick brown fox jumps over the lazy dog").to_string()
         );
     }
 }

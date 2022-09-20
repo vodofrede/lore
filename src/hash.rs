@@ -6,6 +6,8 @@ pub mod md2;
 pub mod md4;
 pub mod md5;
 pub mod sha1;
+pub mod sha256;
+pub mod sha512;
 
 /// A variable-size digest, which can easily be converted into a hexadecimal string for user-facing output.
 ///

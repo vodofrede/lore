@@ -1,10 +1,7 @@
 use crate::hash::{bytes_to_words_le, words_to_bytes_le, Digest};
 
 // based on RFC1320
-const A: u32 = 0x67452301;
-const B: u32 = 0xefcdab89;
-const C: u32 = 0x98badcfe;
-const D: u32 = 0x10325476;
+const B: [u32; 4] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476];
 
 // additional constants for round 1, 2 & 3
 const C1: u32 = 0;
@@ -79,26 +76,22 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], i: usize) -> [u32; 4] {
 ///
 /// assert_eq!(digest.to_string(), "a448017aaf21d8525fc10ae87aa6729d");
 /// ```
-pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
+pub fn md4(message: impl AsRef<[u8]>) -> Digest<16> {
     let padded = pad(message);
-    let buffer = padded.array_chunks::<64>().map(bytes_to_words_le).fold(
-        [A, B, C, D],
-        |[a, b, c, d], words| {
+    let buffer = padded
+        .array_chunks::<64>()
+        .map(bytes_to_words_le)
+        .fold(B, |buffer, words| {
             // perform rounds on this chunk of data
-            let mut state = [a, b, c, d];
+            let mut state = buffer;
+
             for i in 0..48 {
                 state = step(state, &words, i);
                 state.rotate_right(1);
             }
 
-            [
-                a.wrapping_add(state[0]),
-                b.wrapping_add(state[1]),
-                c.wrapping_add(state[2]),
-                d.wrapping_add(state[3]),
-            ]
-        },
-    );
+            buffer.zip(state).map(|(b, s)| b.wrapping_add(s))
+        });
     let digest = *words_to_bytes_le(buffer)
         .array_chunks::<16>()
         .next()
@@ -137,39 +130,37 @@ mod tests {
     fn md4_hash() {
         assert_eq!(
             "1bee69a46ba811185c194762abaeae90",
-            hash("The quick brown fox jumps over the lazy dog").to_string()
+            md4("The quick brown fox jumps over the lazy dog").to_string()
         );
         assert_eq!(
             "b86e130ce7028da59e672d56ad0113df",
-            hash("The quick brown fox jumps over the lazy cog").to_string()
+            md4("The quick brown fox jumps over the lazy cog").to_string()
         );
-        assert_eq!("31d6cfe0d16ae931b73c59d7e0c089c0", hash("").to_string());
+        assert_eq!("31d6cfe0d16ae931b73c59d7e0c089c0", md4("").to_string());
 
         // RFC 1320 test suite
-        assert_eq!(hash("").to_string(), "31d6cfe0d16ae931b73c59d7e0c089c0");
-        assert_eq!(hash("a").to_string(), "bde52cb31de33e46245e05fbdbd6fb24");
-        assert_eq!(hash("abc").to_string(), "a448017aaf21d8525fc10ae87aa6729d");
+        assert_eq!(md4("").to_string(), "31d6cfe0d16ae931b73c59d7e0c089c0");
+        assert_eq!(md4("a").to_string(), "bde52cb31de33e46245e05fbdbd6fb24");
+        assert_eq!(md4("abc").to_string(), "a448017aaf21d8525fc10ae87aa6729d");
         assert_eq!(
-            hash("message digest").to_string(),
+            md4("message digest").to_string(),
             "d9130a8164549fe818874806e1c7014b"
         );
         assert_eq!(
-            hash("abcdefghijklmnopqrstuvwxyz").to_string(),
+            md4("abcdefghijklmnopqrstuvwxyz").to_string(),
             "d79e1c308aa5bbcdeea8ed63df412da9"
         );
         assert_eq!(
-            hash("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").to_string(),
+            md4("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").to_string(),
             "043f8582f241db351ce627e153e7f0e4"
         );
         assert_eq!(
-            hash(
-                "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
-            )
-            .to_string(),
+            md4("12345678901234567890123456789012345678901234567890123456789012345678901234567890")
+                .to_string(),
             "e33b4ddc9c38f2199c3e7b164fcc0536"
         );
         assert_eq!(
-            hash("Rosetta Code").to_string(),
+            md4("Rosetta Code").to_string(),
             "a52bcfc6a0d0d300cdc5ddbfbefe478b"
         );
     }
@@ -233,7 +224,7 @@ mod tests {
             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
             0x00000060, 0x00000000,
         ];
-        let mut state: [u32; 4] = [A, B, C, D];
+        let mut state: [u32; 4] = B;
 
         #[allow(clippy::needless_range_loop)]
         for i in 0..48 {

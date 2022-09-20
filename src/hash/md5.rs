@@ -1,10 +1,7 @@
 use crate::hash::{bytes_to_words_le, md4::pad, words_to_bytes_le, Digest};
 
 // based on RFC1321
-const A: u32 = 0x67452301;
-const B: u32 = 0xefcdab89;
-const C: u32 = 0x98badcfe;
-const D: u32 = 0x10325476;
+const B: [u32; 4] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476];
 
 const K: [u32; 64] = [
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -69,15 +66,17 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], index: usize) -> [u32; 4] {
 /// assert_eq!(digest.to_string(), "9cdfb439c7876e703e307864c9167a15");
 ///
 /// ```
-pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
+pub fn md5(message: impl AsRef<[u8]>) -> Digest<16> {
     // the padding function for MD5 is exactly equivalent to the MD4 version, so we reuse it.
     let padded = pad(message);
-    let buffer = padded.array_chunks::<64>().map(bytes_to_words_le).fold(
-        [A, B, C, D],
-        |[a, b, c, d], words| {
+    let buffer = padded
+        .array_chunks::<64>()
+        .map(bytes_to_words_le)
+        .fold(B, |buffer, words| {
             // initialize state
-            let mut state = [a, b, c, d];
+            let mut state = buffer;
 
+            // do 64 steps
             for i in 0..64 {
                 state = step(state, &words, i);
                 println!("{state:08x?}");
@@ -85,14 +84,8 @@ pub fn hash(message: impl AsRef<[u8]>) -> Digest<16> {
             }
 
             // add the computed state to the buffer
-            [
-                a.wrapping_add(state[0]),
-                b.wrapping_add(state[1]),
-                c.wrapping_add(state[2]),
-                d.wrapping_add(state[3]),
-            ]
-        },
-    );
+            buffer.zip(state).map(|(b, s)| b.wrapping_add(s))
+        });
     let digest = *words_to_bytes_le(buffer)
         .array_chunks::<16>()
         .next()
@@ -107,15 +100,15 @@ mod tests {
 
     #[test]
     fn md5_hash() {
-        assert_eq!("d41d8cd98f00b204e9800998ecf8427e", hash("").to_string());
+        assert_eq!("d41d8cd98f00b204e9800998ecf8427e", md5("").to_string());
         assert_eq!(
             "73e51861b65c1e83d6136fb6a002585e",
-            hash("tihi xd").to_string()
+            md5("tihi xd").to_string()
         );
-        assert_eq!("9cdfb439c7876e703e307864c9167a15", hash("lol").to_string());
+        assert_eq!("9cdfb439c7876e703e307864c9167a15", md5("lol").to_string());
         assert_eq!(
             "fd6f92edff2b7db7cd92b494c4926ef0",
-            hash("Lorem ipsum dolor sit amet. Nam placeat iste aut dolorem necessitatibus sit unde magni. Nam cumque quia nam fugit quibusdam ut incidunt minima nam dignissimos iusto et voluptatum magnam. Et pariatur eius vel excepturi odit libero sit molestiae consequatur vel nostrum ullam. Sit sint beatae eos doloribus sapiente aut aperiam ullam ut laboriosam debitis! Qui reiciendis rerum est omnis galisum aut similique iure est dolores fuga sit rerum dicta. Aut excepturi fuga et enim ipsum a quia ut velit atque id iste nobis. Non molestiae vero et veritatis aliquam sed enim ducimus. At sunt tempora quo quisquam unde aut ipsum nulla et fugit eius in nulla fugit qui magnam excepturi aut rerum officia. Et officia magnam eos reiciendis voluptatum ea voluptas recusandae in similique enim. Ut provident laudantium ut temporibus eius ut laudantium voluptate aut ducimus impedit. Et asperiores aperiam sit deleniti voluptas ex porro omnis ut voluptas assumenda aut necessitatibus aliquid.").to_string()
+            md5("Lorem ipsum dolor sit amet. Nam placeat iste aut dolorem necessitatibus sit unde magni. Nam cumque quia nam fugit quibusdam ut incidunt minima nam dignissimos iusto et voluptatum magnam. Et pariatur eius vel excepturi odit libero sit molestiae consequatur vel nostrum ullam. Sit sint beatae eos doloribus sapiente aut aperiam ullam ut laboriosam debitis! Qui reiciendis rerum est omnis galisum aut similique iure est dolores fuga sit rerum dicta. Aut excepturi fuga et enim ipsum a quia ut velit atque id iste nobis. Non molestiae vero et veritatis aliquam sed enim ducimus. At sunt tempora quo quisquam unde aut ipsum nulla et fugit eius in nulla fugit qui magnam excepturi aut rerum officia. Et officia magnam eos reiciendis voluptatum ea voluptas recusandae in similique enim. Ut provident laudantium ut temporibus eius ut laudantium voluptate aut ducimus impedit. Et asperiores aperiam sit deleniti voluptas ex porro omnis ut voluptas assumenda aut necessitatibus aliquid.").to_string()
         );
     }
 
@@ -193,7 +186,7 @@ mod tests {
             0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
             0x00000038, 0x00000000,
         ];
-        let mut state = [A, B, C, D];
+        let mut state = B;
 
         #[allow(clippy::needless_range_loop)]
         for i in 0..64 {
