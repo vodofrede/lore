@@ -65,9 +65,9 @@ fn step([mut a, b, c, d]: [u32; 4], words: &[u32], i: usize) -> [u32; 4] {
     [a, b, c, d]
 }
 
-/// Computes the MD4 digest of the input bytes.
+/// Computes the MD4 hash value (digest) of the input bytes.
 ///
-/// Returns a `Digest<16>` which implements `Display` in order to get at hexadecimal-string representation.
+/// Returns a 16-byte `Digest` which implements `Display` in order to get at hexadecimal-string representation.
 ///
 /// # Examples
 ///

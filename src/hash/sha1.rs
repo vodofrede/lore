@@ -1,6 +1,6 @@
 use crate::hash::{bytes_to_words_be, words_to_bytes_be, Digest};
 
-// based on RFC3174, US Secure Hash Algorithm 1
+// based on RFC3174, Secure Hash Algorithm 1
 
 // round functions
 const F1: fn(u32, u32, u32) -> u32 = |x, y, z| (x & y) | ((!x) & z);
@@ -61,9 +61,9 @@ fn step([a, b, c, d, e]: [u32; 5], words: &[u32], i: usize) -> [u32; 5] {
     ]
 }
 
-/// Computes the SHA1 digest of the input bytes.
+/// Computes the SHA1 hash value (digest) of the input bytes.
 ///
-/// Returns a 20-byte long `Digest` which implements `Display` in order to get at hexadecimal-string representation.
+/// Returns a 20-byte `Digest` which implements `Display` in order to get at hexadecimal-string representation.
 ///
 /// # Examples
 ///

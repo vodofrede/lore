@@ -43,9 +43,9 @@ fn checksum(message: impl AsRef<[u8]>) -> Vec<u8> {
     message
 }
 
-/// Computes the MD2 digest of the input bytes.
+/// Computes the MD2 hash value (digest) of the input bytes.
 ///
-/// Returns a `Digest<16>` which implements `Display` in order to get at hexadecimal-string representation.
+/// Returns a 16-byte `Digest` which implements `Display` in order to get at hexadecimal-string representation.
 ///
 /// # Examples
 ///
